@@ -27,6 +27,7 @@ namespace MapTo
             TypeConverterInterfaceTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(ITypeConverterSource.FullyQualifiedName);
             MapPropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapPropertyAttributeSource.FullyQualifiedName);
             MapFromAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapFromAttributeSource.FullyQualifiedName);
+            MapToAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MapToAttributeSource.FullyQualifiedName);
             MappingContextTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(MappingContextSource.FullyQualifiedName);
 
             AddUsingIfRequired(sourceGenerationOptions.SupportNullableStaticAnalysis, "System.Diagnostics.CodeAnalysis");
@@ -41,6 +42,8 @@ namespace MapTo
         protected INamedTypeSymbol IgnorePropertyAttributeTypeSymbol { get; }
 
         protected INamedTypeSymbol MapFromAttributeTypeSymbol { get; }
+
+        protected INamedTypeSymbol MapToAttributeTypeSymbol { get; }
 
         protected INamedTypeSymbol MappingContextTypeSymbol { get; }
 
@@ -125,7 +128,7 @@ namespace MapTo
         {
             return TypeSyntax.BaseList is not null && TypeSyntax.BaseList.Types
                 .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
-                .Any(t => t?.GetAttribute(MapFromAttributeTypeSymbol) != null);
+                .Any(t => (t?.GetAttribute(MapFromAttributeTypeSymbol) != null) || (t?.GetAttribute(MapToAttributeTypeSymbol) != null));
         }
 
         protected virtual MappedProperty? MapProperty(ISymbol sourceTypeSymbol, IReadOnlyCollection<IPropertySymbol> sourceProperties, ISymbol property)

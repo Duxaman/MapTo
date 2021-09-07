@@ -1,4 +1,6 @@
-﻿using static MapTo.Sources.Constants;
+﻿using System;
+using System.Diagnostics;
+using static MapTo.Sources.Constants;
 
 namespace MapTo.Sources
 {
@@ -7,6 +9,7 @@ namespace MapTo.Sources
         internal const string AttributeName = "MapProperty";
         internal const string AttributeClassName = AttributeName + "Attribute";
         internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
+        internal const string SourceTypeName = "SourceTypeName";
         internal const string SourcePropertyNamePropertyName = "SourcePropertyName";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
@@ -49,11 +52,21 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public string{options.NullableReferenceSyntax} {SourcePropertyNamePropertyName} {{ get; set; }}")
+                .WriteLine($"public string{options.NullableReferenceSyntax} {SourcePropertyNamePropertyName} {{ get; set; }}");
+
+            if (options.GenerateXmlDocument)
+            {
+                builder
+                    .WriteLine("/// <summary>")
+                    .WriteLine("/// Gets or sets the Type name of the object to mapping from.")
+                    .WriteLine("/// </summary>");
+            }
+
+            builder
+                .WriteLine($"public Type{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
                 .WriteClosingBracket() // class
                 .WriteClosingBracket(); // namespace
 
-            
             return new(builder.ToString(), $"{AttributeClassName}.g.cs");
         }
     }
