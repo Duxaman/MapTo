@@ -91,15 +91,15 @@ namespace MapTo
 
         protected IPropertySymbol? FindSourceProperty(ISymbol sourceTypeSymbol, IEnumerable<IPropertySymbol> sourceProperties, ISymbol property)
         {
+
             var propertyName = property
                 .GetAttributes(MapPropertyAttributeTypeSymbol)
                 .FirstOrDefault(a =>
                 {
-                    if(a.GetAttributeParameterValue(MapPropertyAttributeSource.SourceTypeName) is ISymbol sourcePropertyType)
+                    if (a.GetAttributeParameterValue(MapPropertyAttributeSource.SourceTypeName) is string propertyTypeFromAttribute)
                     {
-                        return sourcePropertyType.Equals(sourceTypeSymbol, SymbolEqualityComparer.Default);
+                        return propertyTypeFromAttribute == sourceTypeSymbol.ToDisplayString();
                     }
-
                     return true;
                 }
                 )

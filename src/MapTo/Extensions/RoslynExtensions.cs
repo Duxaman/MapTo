@@ -43,17 +43,16 @@ namespace MapTo.Extensions
         public static bool HasAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
             symbol.GetAttributes().Any(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true);
 
-        public static bool HasAttributeForType(this ISymbol symbol, ITypeSymbol attributeSymbol, ITypeSymbol type, string typeName)
+        public static bool HasAttributeForType(this ISymbol symbol, ITypeSymbol attributeSymbol, ITypeSymbol type, string typeParameterName)
         {
             return symbol.GetAttributes()
                 .Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true)  // Select all attributes equals to attributeSymbol
                 .Any(a =>
                 {
-                    if (a.GetAttributeParameterValue(typeName) is ISymbol propertyTypeFromAttribute) 
+                    if(a.GetAttributeParameterValue(typeParameterName) is string propertyTypeFromAttribute)
                     {
-                        return propertyTypeFromAttribute.Equals(type, SymbolEqualityComparer.Default);
+                        return propertyTypeFromAttribute == type.ToDisplayString();
                     }
-
                     return true;
                 }
             );

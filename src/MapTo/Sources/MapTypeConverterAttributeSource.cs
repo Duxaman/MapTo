@@ -62,7 +62,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public Type{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
+                .WriteLine($"public string{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
                 .WriteLine();
 
             if (options.GenerateXmlDocument)
