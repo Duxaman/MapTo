@@ -28,12 +28,13 @@ namespace MapTo
                 var options = SourceGenerationOptions.From(context);
                 var compilation = context.Compilation
                     .AddSource(ref context, MapFromAttributeSource.Generate(options))
+                    .AddSource(ref context, MapToAttributeSource.Generate(options))
                     .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
                     .AddSource(ref context, ITypeConverterSource.Generate(options))
                     .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options))
                     .AddSource(ref context, MapPropertyAttributeSource.Generate(options))
                     .AddSource(ref context, MappingContextSource.Generate(options));
-
+                
                 if (context.SyntaxReceiver is MapToSyntaxReceiver receiver && receiver.CandidateTypes.Any())
                 {
                     AddGeneratedMappingsClasses(context, compilation, receiver.CandidateTypes, options);
