@@ -118,6 +118,9 @@ namespace MapTo
         protected IEnumerable<INamedTypeSymbol> GetSourceTypesSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
             GetSourceTypesSymbol(typeDeclarationSyntax.GetAttributes(MapFromAttributeSource.AttributeName), semanticModel);
 
+        protected IEnumerable<INamedTypeSymbol> GetTargetTypesSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
+            GetSourceTypesSymbol(typeDeclarationSyntax.GetAttributes(MapToAttributeSource.AttributeName), semanticModel);
+
         protected IEnumerable<INamedTypeSymbol> GetSourceTypesSymbol(IEnumerable<SyntaxNode> attributeSyntaxList, SemanticModel? semanticModel = null)
         {
             var result = new List<INamedTypeSymbol>();
@@ -281,16 +284,23 @@ namespace MapTo
             }
 
             var sourceTypeSymbolList = GetSourceTypesSymbol(TypeSyntax, semanticModel);
-            if (sourceTypeSymbolList is null || !sourceTypeSymbolList.Any())
+            var targetTypeSymbolList = GetTargetTypesSymbol(TypeSyntax, semanticModel);
+
+            if ((sourceTypeSymbolList is null || !sourceTypeSymbolList.Any()) && (targetTypeSymbolList is null || !targetTypeSymbolList.Any()))
             {
                 AddDiagnostic(DiagnosticsFactory.MapFromAttributeNotFoundError(TypeSyntax.GetLocation()));
                 return result;
             }
 
-            result = sourceTypeSymbolList
+            result.AddRange(sourceTypeSymbolList
                 .Select(s => CreateMappingModel(s, typeSymbol, semanticModel))
-                .Where(s => s is not null)
-                .ToList()!;
+                .Where(m => m is not null)
+                .ToList()!);
+
+            result.AddRange(targetTypeSymbolList
+                .Select(t => CreateMappingModel(typeSymbol, t, semanticModel))
+                .Where(m => m is not null)
+                .ToList()!);
 
             return result;
         }

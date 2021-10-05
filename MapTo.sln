@@ -1,12 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapTo", "src\MapTo\MapTo.csproj", "{4DB371AC-48D0-4F01-8EF3-7707D06EF0A7}"
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31624.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapTo", "src\MapTo\MapTo.csproj", "{4DB371AC-48D0-4F01-8EF3-7707D06EF0A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapToTests", "test\MapTo.Tests\MapTo.Tests.csproj", "{797DA57B-AC7E-468B-8799-44C5A574C0E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapTo.Tests", "test\MapTo.Tests\MapTo.Tests.csproj", "{797DA57B-AC7E-468B-8799-44C5A574C0E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp", "test\TestConsoleApp\TestConsoleApp.csproj", "{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestConsoleApp", "test\TestConsoleApp\TestConsoleApp.csproj", "{5BE2551A-9EF9-42FA-B6D1-5B5E6A90CC85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapTo.Integration.Tests", "test\MapTo.Integration.Tests\MapTo.Integration.Tests.csproj", "{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MapTo.Integration.Tests", "test\MapTo.Integration.Tests\MapTo.Integration.Tests.csproj", "{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestConsoleApp.Common", "TestConsoleApp.Common\TestConsoleApp.Common.csproj", "{9F312258-4F60-46B3-818C-B56AE7A31473}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,5 +35,15 @@ Global
 		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{23B46FDF-6A1E-4287-88C9-C8C5D7EECB8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F312258-4F60-46B3-818C-B56AE7A31473}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F312258-4F60-46B3-818C-B56AE7A31473}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F312258-4F60-46B3-818C-B56AE7A31473}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F312258-4F60-46B3-818C-B56AE7A31473}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D6388DE9-FD60-4179-93BB-46DEA495BF91}
 	EndGlobalSection
 EndGlobal

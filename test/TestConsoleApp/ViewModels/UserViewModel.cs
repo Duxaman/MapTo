@@ -1,15 +1,18 @@
 ﻿using System;
 using MapTo;
+using TestConsoleApp.Common;
 using TestConsoleApp.Data.Models;
 
 namespace TestConsoleApp.ViewModels
 {
     [MapFrom(typeof(User))]
     [MapFrom(typeof(UserDto))]
+    //[MapTo(typeof(UserDto))]
+    [MapTo(typeof(UserInOtherProject))]
     public partial class UserViewModel
     {
-        //[MapProperty(SourcePropertyName = nameof(User.Id))]
-        [MapProperty(SourcePropertyName = nameof(UserDto.Id), SourceTypeName = "TestConsoleApp.Data.Models.UserDto")]
+        [MapProperty(SourcePropertyName = nameof(User.Id))]
+        //[MapProperty(SourcePropertyName = nameof(UserDto.Id), SourceTypeName = "TestConsoleApp.Data.Models.UserDto")]
         //[MapTypeConverter(typeof(IdConverter), SourceTypeName = typeof(UserDto))]
         [MapTypeConverter(typeof(IdConverter))]
         public string Key { get; }
