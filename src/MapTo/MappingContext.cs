@@ -112,10 +112,10 @@ namespace MapTo
 
         protected abstract ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isInheritFromMappedBaseClass);
 
-        protected IEnumerable<INamedTypeSymbol> GetSourceTypesSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
+        protected IReadOnlyList<INamedTypeSymbol> GetSourceTypesSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
             GetSourceTypesSymbol(typeDeclarationSyntax.GetAttributes(MapFromAttributeSource.AttributeName), semanticModel);
 
-        protected IEnumerable<INamedTypeSymbol> GetSourceTypesSymbol(IEnumerable<SyntaxNode> attributeSyntaxList, SemanticModel? semanticModel = null)
+        protected IReadOnlyList<INamedTypeSymbol> GetSourceTypesSymbol(IEnumerable<SyntaxNode> attributeSyntaxList, SemanticModel? semanticModel = null)
         {
             var result = new List<INamedTypeSymbol>();
             if (attributeSyntaxList is null || attributeSyntaxList.IsEmpty())
@@ -131,8 +131,7 @@ namespace MapTo
                     .OfType<TypeOfExpressionSyntax>()
                     .SingleOrDefault();
 
-                var typeSymbol = sourceTypeExpressionSyntax is not null ? semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
-                if (typeSymbol is not null)
+                if ( sourceTypeExpressionSyntax is not null && semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type is INamedTypeSymbol typeSymbol)
                 {
                     result.Add(typeSymbol);
                 }
@@ -267,7 +266,7 @@ namespace MapTo
                 : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()).ToImmutableArray();
         }
 
-        private IEnumerable<MappingModel> CreateMappingModelList()
+        private IReadOnlyList<MappingModel> CreateMappingModelList()
         {
             var semanticModel = Compilation.GetSemanticModel(TypeSyntax.SyntaxTree);
             var result = new List<MappingModel>();

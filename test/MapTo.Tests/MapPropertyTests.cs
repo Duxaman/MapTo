@@ -105,7 +105,7 @@ namespace MapTo
                         .WriteLine("[MapProperty(SourcePropertyName = nameof(Baz.Prop4), SourceTypeName = typeof(Foo))]")
                         .WriteLine("public int Prop6 { get; set; }");
                 },
-                SourcePropertyBuilder: builder => builder.WriteLine("public int Prop4 { get; set; }")));
+                SourcePropertyBuilder: builder => builder.WriteLine("public int Prop4 { get; set; }").WriteLine("public int Prop6 { get; set; }")));
 
             var expectedResult = @"
     partial class Foo
@@ -125,6 +125,7 @@ namespace MapTo
             Prop3 = baz.Prop3;
             Prop4 = baz.Prop3;
             Prop5 = baz.Prop4;
+            Prop6 = baz.Prop6;
         }
 ".Trim();
 
