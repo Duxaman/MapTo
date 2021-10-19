@@ -26,7 +26,6 @@ namespace MapTo
             try
             {
                 var options = SourceGenerationOptions.From(context);
-
                 var compilation = context.Compilation
                     .AddSource(ref context, MapFromAttributeSource.Generate(options))
                     .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
@@ -54,19 +53,22 @@ namespace MapTo
                 var mappingContext = MappingContext.Create(compilation, options, typeDeclarationSyntax);
                 mappingContext.Diagnostics.ForEach(context.ReportDiagnostic);
 
-                if (mappingContext.Model is null)
+                if (mappingContext.Models.IsEmpty())
                 {
                     continue;
                 }
 
-                var (source, hintName) = typeDeclarationSyntax switch
+                foreach (var model in mappingContext.Models)
                 {
-                    ClassDeclarationSyntax => MapClassSource.Generate(mappingContext.Model),
-                    RecordDeclarationSyntax => MapRecordSource.Generate(mappingContext.Model),
-                    _ => throw new ArgumentOutOfRangeException()
-                };
+                    var (source, hintName) = typeDeclarationSyntax switch
+                    {
+                        ClassDeclarationSyntax => MapClassSource.Generate(model),
+                        RecordDeclarationSyntax => MapRecordSource.Generate(model),
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
 
-                context.AddSource(hintName, source);
+                    context.AddSource(hintName, source);
+                }
             }
         }
     }
