@@ -37,8 +37,6 @@ namespace MapTo
     internal record MappingModel (
         SourceGenerationOptions Options,
         string? Namespace,
-        SyntaxTokenList Modifiers,
-        string Type,
         string TypeIdentifierName,
         string SourceNamespace,
         string SourceTypeIdentifierName,

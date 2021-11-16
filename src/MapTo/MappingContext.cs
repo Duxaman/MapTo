@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using MapTo.Extensions;
 using MapTo.Sources;
@@ -13,13 +14,14 @@ namespace MapTo
     {
         private readonly List<SymbolDisplayPart> _ignoredNamespaces;
 
-        protected MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
+        protected MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, INamedTypeSymbol sourceType, INamedTypeSymbol targetType)
         {
             _ignoredNamespaces = new();
             Diagnostics = ImmutableArray<Diagnostic>.Empty;
             Usings = ImmutableArray.Create("System", Constants.RootNamespace);
             SourceGenerationOptions = sourceGenerationOptions;
-            TypeSyntax = typeSyntax;
+            SourceType = sourceType;
+            TargetType = targetType;
             Compilation = compilation;
 
             IgnorePropertyAttributeTypeSymbol = compilation.GetTypeByMetadataNameOrThrow(IgnorePropertyAttributeSource.FullyQualifiedName);
@@ -35,7 +37,7 @@ namespace MapTo
 
         public ImmutableArray<Diagnostic> Diagnostics { get; private set; }
 
-        public IEnumerable<MappingModel> Models { get; private set; } = new List<MappingModel>();
+        public MappingModel? Model { get; private set; }
 
         protected Compilation Compilation { get; }
 
@@ -55,20 +57,22 @@ namespace MapTo
 
         protected INamedTypeSymbol TypeConverterInterfaceTypeSymbol { get; }
 
-        protected TypeDeclarationSyntax TypeSyntax { get; }
+        protected INamedTypeSymbol SourceType { get; }
+
+        protected INamedTypeSymbol TargetType { get; }
 
         protected ImmutableArray<string> Usings { get; private set; }
 
-        public static MappingContext Create(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
+        public static MappingContext Create(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, INamedTypeSymbol sourceType, INamedTypeSymbol targetType)
         {
-            MappingContext context = typeSyntax switch
+            MappingContext context = (sourceType.TypeKind, sourceType.IsRecord) switch
             {
-                ClassDeclarationSyntax => new ClassMappingContext(compilation, sourceGenerationOptions, typeSyntax),
-                RecordDeclarationSyntax => new RecordMappingContext(compilation, sourceGenerationOptions, typeSyntax),
+                (TypeKind.Class, false)  => new ClassMappingContext(compilation, sourceGenerationOptions, sourceType, targetType),
+                (_, true) => new RecordMappingContext(compilation, sourceGenerationOptions, sourceType, targetType),
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            context.Models = context.CreateMappingModelList();
+            context.Model = context.CreateMappingModel(sourceType, targetType);
 
             return context;
         }
@@ -86,7 +90,8 @@ namespace MapTo
 
         protected void AddUsingIfRequired(bool condition, string? ns)
         {
-            if (ns is not null && condition && ns != TypeSyntax.GetNamespace() && !Usings.Contains(ns))
+            //NameSpace + 
+            if (ns is not null && condition && ns != SourceType.ContainingNamespace.ToDisplayString() && !Usings.Contains(ns))
             {
                 Usings = Usings.Add(ns);
             }
@@ -115,42 +120,11 @@ namespace MapTo
 
         protected abstract ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isInheritFromMappedBaseClass);
 
-        protected IEnumerable<INamedTypeSymbol> GetSourceTypesSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
-            GetSourceTypesSymbol(typeDeclarationSyntax.GetAttributes(MapFromAttributeSource.AttributeName), semanticModel);
 
-        protected IEnumerable<INamedTypeSymbol> GetTargetTypesSymbol(TypeDeclarationSyntax typeDeclarationSyntax, SemanticModel? semanticModel = null) =>
-            GetSourceTypesSymbol(typeDeclarationSyntax.GetAttributes(MapToAttributeSource.AttributeName), semanticModel);
-
-        protected IEnumerable<INamedTypeSymbol> GetSourceTypesSymbol(IEnumerable<SyntaxNode> attributeSyntaxList, SemanticModel? semanticModel = null)
-        {
-            var result = new List<INamedTypeSymbol>();
-            if (attributeSyntaxList is null || attributeSyntaxList.IsEmpty())
-            {
-                return result;
-            }
-
-            foreach (var attributeSyntax in attributeSyntaxList)
-            {
-                semanticModel ??= Compilation.GetSemanticModel(attributeSyntax.SyntaxTree);
-                var sourceTypeExpressionSyntax = attributeSyntax
-                    .DescendantNodes()
-                    .OfType<TypeOfExpressionSyntax>()
-                    .SingleOrDefault();
-
-                var typeSymbol = sourceTypeExpressionSyntax is not null ? semanticModel.GetTypeInfo(sourceTypeExpressionSyntax.Type).Type as INamedTypeSymbol : null;
-                if (typeSymbol is not null)
-                {
-                    result.Add(typeSymbol);
-                }
-            }
-
-            return result;
-        }
-
-        protected bool IsTypeInheritFromMappedBaseClass(SemanticModel semanticModel)
-        {
-            return TypeSyntax.BaseList is not null && TypeSyntax.BaseList.Types
-                .Select(t => semanticModel.GetTypeInfo(t.Type).Type)
+        protected bool IsTypeInheritFromMappedBaseClass()
+        { //Get base types?
+            var baseTypes = SourceType.GetBaseTypes();
+            return baseTypes is not null && baseTypes
                 .Any(t => (t?.GetAttribute(MapFromAttributeTypeSymbol) != null) || (t?.GetAttribute(MapToAttributeTypeSymbol) != null));
         }
 
@@ -273,51 +247,21 @@ namespace MapTo
                 : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()).ToImmutableArray();
         }
 
-        private IEnumerable<MappingModel> CreateMappingModelList()
-        {
-            var semanticModel = Compilation.GetSemanticModel(TypeSyntax.SyntaxTree);
-            var result = new List<MappingModel>();
-            if (semanticModel.GetDeclaredSymbol(TypeSyntax) is not INamedTypeSymbol typeSymbol)
-            {
-                AddDiagnostic(DiagnosticsFactory.TypeNotFoundError(TypeSyntax.GetLocation(), TypeSyntax.Identifier.ValueText));
-                return result;
-            }
-
-            var sourceTypeSymbolList = GetSourceTypesSymbol(TypeSyntax, semanticModel);
-            var targetTypeSymbolList = GetTargetTypesSymbol(TypeSyntax, semanticModel);
-
-            if ((sourceTypeSymbolList is null || !sourceTypeSymbolList.Any()) && (targetTypeSymbolList is null || !targetTypeSymbolList.Any()))
-            {
-                AddDiagnostic(DiagnosticsFactory.MapFromAttributeNotFoundError(TypeSyntax.GetLocation()));
-                return result;
-            }
-
-            result.AddRange(sourceTypeSymbolList
-                .Select(s => CreateMappingModel(s, typeSymbol, semanticModel))
-                .Where(m => m is not null)
-                .ToList()!);
-
-            result.AddRange(targetTypeSymbolList
-                .Select(t => CreateMappingModel(typeSymbol, t, semanticModel))
-                .Where(m => m is not null)
-                .ToList()!);
-
-            return result;
-        }
-
-        private MappingModel? CreateMappingModel(INamedTypeSymbol sourceTypeSymbol, INamedTypeSymbol typeSymbol, SemanticModel semanticModel)
+        private MappingModel? CreateMappingModel(INamedTypeSymbol sourceTypeSymbol, INamedTypeSymbol typeSymbol)
         {
             _ignoredNamespaces.Add(sourceTypeSymbol.ContainingNamespace.ToDisplayParts().First());
 
-            var typeIdentifierName = TypeSyntax.GetIdentifierName();
+            //name can be retrieved from inamedSymbol api++++
+            var typeIdentifierName = SourceType.Name;
             var sourceTypeIdentifierName = sourceTypeSymbol.Name;
-            var isTypeInheritFromMappedBaseClass = IsTypeInheritFromMappedBaseClass(semanticModel);
-            var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(semanticModel, sourceTypeSymbol);
+            var isTypeInheritFromMappedBaseClass = IsTypeInheritFromMappedBaseClass();
+            var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(sourceTypeSymbol);
 
             var mappedProperties = GetMappedProperties(typeSymbol, sourceTypeSymbol, isTypeInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
             {
-                AddDiagnostic(DiagnosticsFactory.NoMatchingPropertyFoundError(TypeSyntax.GetLocation(), typeSymbol, sourceTypeSymbol));
+                //todo: check if correct
+                AddDiagnostic(DiagnosticsFactory.NoMatchingPropertyFoundError(SourceType.Locations.First(), typeSymbol, sourceTypeSymbol));
                 return null;
             }
 
@@ -325,9 +269,7 @@ namespace MapTo
 
             return new MappingModel(
                 SourceGenerationOptions,
-                TypeSyntax.GetNamespace(),
-                TypeSyntax.Modifiers,
-                TypeSyntax.Keyword.Text,
+                SourceType.ContainingNamespace.ToDisplayString(),
                 typeIdentifierName,
                 sourceTypeSymbol.ContainingNamespace.ToDisplayString(),
                 sourceTypeIdentifierName,
@@ -352,25 +294,27 @@ namespace MapTo
                     SymbolEqualityComparer.Default.Equals(propertyType, i.TypeArguments[1]));
         }
 
-        private bool ShouldGenerateSecondaryConstructor(SemanticModel semanticModel, ISymbol sourceTypeSymbol)
+        private bool ShouldGenerateSecondaryConstructor(ISymbol sourceTypeSymbol)
         {
-            var constructorSyntax = TypeSyntax.DescendantNodes()
-                .OfType<ConstructorDeclarationSyntax>()
-                .SingleOrDefault(c =>
-                    c.ParameterList.Parameters.Count == 1 &&
-                    SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(c.ParameterList.Parameters.Single().Type!).ConvertedType, sourceTypeSymbol));
+            var constructor = SourceType.Constructors.SingleOrDefault(c => c.Parameters.Count() == 1 && SymbolEqualityComparer.Default.Equals(c.Parameters.Single().Type, sourceTypeSymbol));
+            //var constructorSyntax = SourceType.DescendantNodes()
+            //    .OfType<ConstructorDeclarationSyntax>()
+            //    .SingleOrDefault(c =>
+            //        c.ParameterList.Parameters.Count == 1 &&
+            //        SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(c.ParameterList.Parameters.Single().Type!).ConvertedType, sourceTypeSymbol));
 
-            if (constructorSyntax is null)
+            if (constructor is null)
             {
                 // Secondary constructor is not defined.
                 return true;
             }
 
-            if (constructorSyntax.Initializer?.ArgumentList.Arguments is not { Count: 2 } arguments ||
-                !SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(arguments[0].Expression).ConvertedType, MappingContextTypeSymbol) ||
-                !SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(arguments[1].Expression).ConvertedType, sourceTypeSymbol))
+            if (constructor.Parameters is not { Length: 2 } arguments ||
+                !SymbolEqualityComparer.Default.Equals(arguments[0].Type, MappingContextTypeSymbol) ||
+                !SymbolEqualityComparer.Default.Equals(arguments[1].Type, sourceTypeSymbol))
             {
-                AddDiagnostic(DiagnosticsFactory.MissingConstructorArgument(constructorSyntax));
+                //todo: Проверить корректность
+                AddDiagnostic(DiagnosticsFactory.MissingConstructorArgument(constructor));
             }
 
             return false;
@@ -383,7 +327,7 @@ namespace MapTo
                 return null;
             }
 
-            var containingNamespace = TypeSyntax.GetNamespace();
+            var containingNamespace = SourceType.ContainingNamespace.ToDisplayString();
             var symbolNamespace = symbol.ContainingNamespace.ToDisplayString();
             return  containingNamespace != symbolNamespace && _ignoredNamespaces.Contains(symbol.ContainingNamespace.ToDisplayParts().First())
                 ? symbol.ToDisplayString()

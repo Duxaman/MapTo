@@ -36,6 +36,9 @@ namespace MapTo
         internal static Diagnostic MissingConstructorArgument(ConstructorDeclarationSyntax constructorSyntax) =>
             Create($"{ErrorId}050", constructorSyntax.GetLocation(), "There are no argument given that corresponds to the required formal parameter.");
 
+        internal static Diagnostic MissingConstructorArgument(ISymbol constructor) =>
+            Create($"{ErrorId}050", constructor.Locations.FirstOrDefault(), "There are no argument given that corresponds to the required formal parameter.");
+
         private static Diagnostic Create(string id, Location? location, string message, DiagnosticSeverity severity = DiagnosticSeverity.Error) =>
             Diagnostic.Create(new DiagnosticDescriptor(id, string.Empty, message, UsageCategory, severity, true), location ?? Location.None);
     }

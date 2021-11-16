@@ -20,6 +20,17 @@ namespace MapTo.Extensions
             }
         }
 
+        public static IEnumerable<ITypeSymbol> GetBaseTypes(this ITypeSymbol type)
+        {
+            var current = type.BaseType;
+            while (current != null)
+            {
+                yield return current;
+
+                current = current.BaseType;
+            }
+        }
+
         public static IEnumerable<ISymbol> GetAllMembers(this ITypeSymbol type, bool includeBaseTypeMembers = true)
         {
             return includeBaseTypeMembers
@@ -141,6 +152,13 @@ namespace MapTo.Extensions
                 .OfType<IAssemblySymbol>()
                 .Select(assemblySymbol => assemblySymbol.GetTypeByMetadataName(typeMetadataName))
                 .Where(t => t != null)!;
+        }
+
+        public static INamedTypeSymbol GetTypeBySyntax(this Compilation compilation, TypeDeclarationSyntax typeDeclarationSyntax)
+        {
+            var semanticModel = compilation.GetSemanticModel(typeDeclarationSyntax.SyntaxTree);
+
+            return semanticModel.GetDeclaredSymbol(typeDeclarationSyntax) as INamedTypeSymbol ?? throw new TypeLoadException($"Unable to find '{typeDeclarationSyntax.Identifier.Text}' type."); ;
         }
 
         public static bool TypeByMetadataNameExists(this Compilation compilation, string typeMetadataName) => GetTypesByMetadataName(compilation, typeMetadataName).Any();

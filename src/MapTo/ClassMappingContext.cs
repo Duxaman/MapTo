@@ -9,8 +9,8 @@ namespace MapTo
 {
     internal class ClassMappingContext : MappingContext
     {
-        internal ClassMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
-            : base(compilation, sourceGenerationOptions, typeSyntax) { }
+        internal ClassMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, INamedTypeSymbol sourceType, INamedTypeSymbol targetType)
+            : base(compilation, sourceGenerationOptions, sourceType, targetType) { }
 
         protected override ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isInheritFromMappedBaseClass)
         {

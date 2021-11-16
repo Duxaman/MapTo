@@ -8,8 +8,8 @@ namespace MapTo
 {
     internal class RecordMappingContext : MappingContext
     {
-        internal RecordMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
-            : base(compilation, sourceGenerationOptions, typeSyntax) { }
+        internal RecordMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, INamedTypeSymbol sourceType, INamedTypeSymbol targetType)
+            : base(compilation, sourceGenerationOptions, sourceType, targetType) { }
 
         protected override ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isInheritFromMappedBaseClass)
         {

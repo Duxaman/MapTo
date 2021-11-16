@@ -23,10 +23,18 @@ namespace MapTo
                 .Where(a => a.Name is
                     IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } } // For: [MapFrom]
                     or
+                    IdentifierNameSyntax { Identifier: { ValueText: MapToAttributeSource.AttributeName } } // For: [MapTo]
+                    or
                     QualifiedNameSyntax // For: [MapTo.MapFrom]
                     {
                         Left: IdentifierNameSyntax { Identifier: { ValueText: Constants.RootNamespace } },
                         Right: IdentifierNameSyntax { Identifier: { ValueText: MapFromAttributeSource.AttributeName } }
+                    }
+                    or
+                    QualifiedNameSyntax // For: [MapTo.MapTo]
+                    {
+                        Left: IdentifierNameSyntax { Identifier: { ValueText: Constants.RootNamespace } },
+                        Right: IdentifierNameSyntax { Identifier: { ValueText: MapToAttributeSource.AttributeName } }
                     }
                 );
 
