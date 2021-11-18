@@ -91,7 +91,7 @@ namespace MapTo
         protected void AddUsingIfRequired(bool condition, string? ns)
         {
             //NameSpace + 
-            if (ns is not null && condition && ns != SourceType.ContainingNamespace.ToDisplayString() && !Usings.Contains(ns))
+            if (ns is not null && condition && ns != TargetType.ContainingNamespace.ToDisplayString() && !Usings.Contains(ns))
             {
                 Usings = Usings.Add(ns);
             }
@@ -123,7 +123,7 @@ namespace MapTo
 
         protected bool IsTypeInheritFromMappedBaseClass()
         { //Get base types?
-            var baseTypes = SourceType.GetBaseTypes();
+            var baseTypes = TargetType.GetBaseTypes();
             return baseTypes is not null && baseTypes
                 .Any(t => (t?.GetAttribute(MapFromAttributeTypeSymbol) != null) || (t?.GetAttribute(MapToAttributeTypeSymbol) != null));
         }
@@ -247,21 +247,20 @@ namespace MapTo
                 : converterParameter.Values.Where(v => v.Value is not null).Select(v => v.Value!.ToSourceCodeString()).ToImmutableArray();
         }
 
-        private MappingModel? CreateMappingModel(INamedTypeSymbol sourceTypeSymbol, INamedTypeSymbol typeSymbol)
+        private MappingModel? CreateMappingModel()
         {
-            _ignoredNamespaces.Add(sourceTypeSymbol.ContainingNamespace.ToDisplayParts().First());
+            _ignoredNamespaces.Add(SourceType.ContainingNamespace.ToDisplayParts().First());
 
-            //name can be retrieved from inamedSymbol api++++
-            var typeIdentifierName = SourceType.Name;
-            var sourceTypeIdentifierName = sourceTypeSymbol.Name;
+            var typeIdentifierName = TargetType.Name;
+            var sourceTypeIdentifierName = SourceType.Name;
             var isTypeInheritFromMappedBaseClass = IsTypeInheritFromMappedBaseClass();
-            var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(sourceTypeSymbol);
+            var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(SourceType);
 
-            var mappedProperties = GetMappedProperties(typeSymbol, sourceTypeSymbol, isTypeInheritFromMappedBaseClass);
+            var mappedProperties = GetMappedProperties(TargetType, SourceType, isTypeInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
             {
                 //todo: check if correct
-                AddDiagnostic(DiagnosticsFactory.NoMatchingPropertyFoundError(SourceType.Locations.First(), typeSymbol, sourceTypeSymbol));
+                AddDiagnostic(DiagnosticsFactory.NoMatchingPropertyFoundError(TargetType.Locations.First(), typeSymbol, sourceTypeSymbol));
                 return null;
             }
 
@@ -269,7 +268,7 @@ namespace MapTo
 
             return new MappingModel(
                 SourceGenerationOptions,
-                SourceType.ContainingNamespace.ToDisplayString(),
+                TargetType.ContainingNamespace.ToDisplayString(),
                 typeIdentifierName,
                 sourceTypeSymbol.ContainingNamespace.ToDisplayString(),
                 sourceTypeIdentifierName,
@@ -294,9 +293,9 @@ namespace MapTo
                     SymbolEqualityComparer.Default.Equals(propertyType, i.TypeArguments[1]));
         }
 
-        private bool ShouldGenerateSecondaryConstructor(ISymbol sourceTypeSymbol)
+        private bool ShouldGenerateSecondaryConstructor()
         {
-            var constructor = SourceType.Constructors.SingleOrDefault(c => c.Parameters.Count() == 1 && SymbolEqualityComparer.Default.Equals(c.Parameters.Single().Type, sourceTypeSymbol));
+            var constructor = TargetType.Constructors.SingleOrDefault(c => c.Parameters.Count() == 1 && SymbolEqualityComparer.Default.Equals(c.Parameters.Single().Type, SourceType));
             //var constructorSyntax = SourceType.DescendantNodes()
             //    .OfType<ConstructorDeclarationSyntax>()
             //    .SingleOrDefault(c =>
@@ -311,7 +310,7 @@ namespace MapTo
 
             if (constructor.Parameters is not { Length: 2 } arguments ||
                 !SymbolEqualityComparer.Default.Equals(arguments[0].Type, MappingContextTypeSymbol) ||
-                !SymbolEqualityComparer.Default.Equals(arguments[1].Type, sourceTypeSymbol))
+                !SymbolEqualityComparer.Default.Equals(arguments[1].Type, SourceType))
             {
                 //todo: Проверить корректность
                 AddDiagnostic(DiagnosticsFactory.MissingConstructorArgument(constructor));
@@ -327,7 +326,7 @@ namespace MapTo
                 return null;
             }
 
-            var containingNamespace = SourceType.ContainingNamespace.ToDisplayString();
+            var containingNamespace = TargetType.ContainingNamespace.ToDisplayString();
             var symbolNamespace = symbol.ContainingNamespace.ToDisplayString();
             return  containingNamespace != symbolNamespace && _ignoredNamespaces.Contains(symbol.ContainingNamespace.ToDisplayParts().First())
                 ? symbol.ToDisplayString()

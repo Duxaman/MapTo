@@ -26,7 +26,6 @@ namespace MapTo
         {
             try
             {
-                Debugger.Launch();
                 var options = SourceGenerationOptions.From(context);
                 var compilation = context.Compilation
                     .AddSource(ref context, MapFromAttributeSource.Generate(options))
@@ -57,7 +56,7 @@ namespace MapTo
             {
                 var type = compilation.GetTypeBySyntax(typeDeclarationSyntax);
                 var sourceTypes = GetSourceTypes(compilation, typeDeclarationSyntax);
-                var targetTypes = GetSourceTypes(compilation, typeDeclarationSyntax);
+                var targetTypes = GetTargetTypes(compilation, typeDeclarationSyntax);
 
                 var contexts = new List<MappingContext>();
 
@@ -84,7 +83,6 @@ namespace MapTo
 
                     context.AddSource(hintName, source);
                 }
-
             }
         }
 
