@@ -9,7 +9,7 @@ namespace TestConsoleApp.ViewModels
     [MapFrom(typeof(UserDto))]
     //[MapTo(typeof(UserDto))]
     //[MapTo(typeof(UserInSameProject))]
-    //[MapTo(typeof(UserInOtherProject))]
+    [MapTo(typeof(UserInOtherProject))]
     public partial class UserViewModel
     {
         [MapProperty(SourcePropertyName = nameof(User.Id))]

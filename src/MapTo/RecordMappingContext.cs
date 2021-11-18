@@ -11,16 +11,16 @@ namespace MapTo
         internal RecordMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, INamedTypeSymbol sourceType, INamedTypeSymbol targetType)
             : base(compilation, sourceGenerationOptions, sourceType, targetType) { }
 
-        protected override ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isInheritFromMappedBaseClass)
+        protected override ImmutableArray<MappedProperty> GetMappedProperties(bool isInheritFromMappedBaseClass)
         {
-            var sourceProperties = sourceTypeSymbol.GetAllMembers().OfType<IPropertySymbol>().ToArray();
-            return typeSymbol.GetMembers()
+            var sourceProperties = SourceType.GetAllMembers().OfType<IPropertySymbol>().ToArray();
+            return TargetType.GetMembers()
                 .OfType<IMethodSymbol>()
                 .OrderByDescending(s => s.Parameters.Length)
                 .First(s => s.Name == ".ctor")
                 .Parameters
                 .Where(p => !p.HasAttribute(IgnorePropertyAttributeTypeSymbol))
-                .Select(property => MapProperty(sourceTypeSymbol, sourceProperties, property))
+                .Select(property => MapProperty(sourceProperties, property))
                 .Where(mappedProperty => mappedProperty is not null)
                 .ToImmutableArray()!;
         }
