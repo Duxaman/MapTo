@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <Nullable>enable</Nullable>
         <LangVersion>9</LangVersion>
-
+		<IsRoslynComponent>true</IsRoslynComponent>
         <AssemblyName>MapTo</AssemblyName>
         <Description>An object to object mapping generator using Roslyn source generator.</Description>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

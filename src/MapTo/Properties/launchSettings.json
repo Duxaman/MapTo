@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MapTo": {
+      "commandName": "DebugRoslynComponent",
+      "targetProject": "..\\..\\test\\TestConsoleApp\\TestConsoleApp.csproj"
+    }
+  }
+}
