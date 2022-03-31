@@ -12,7 +12,7 @@ namespace TestConsoleApp.ViewModels
         [MapProperty(SourcePropertyName = nameof(UserDto.Id), SourceTypeName = typeof(UserDto))]
         [MapTypeConverter(typeof(IdConverter), SourceTypeName = typeof(UserDto))]
         [MapTypeConverter(typeof(IdConverter), SourceTypeName = typeof(User))]
-        public string Key { get; }
+        public string Key { get; set; }
         public DateTimeOffset RegisteredAt { get; set; }
 
         //[MapProperty(SourcePropertyName = nameof(UserDto.Name))]
@@ -22,7 +22,7 @@ namespace TestConsoleApp.ViewModels
         //[IgnoreProperty(SourceTypeName = typeof(User))]
         public ProfileViewModel Profile { get; set; }
 
-        private class IdConverter : ITypeConverter<int, string>
+        public class IdConverter : ITypeConverter<int, string>
         {
             public string Convert(int source, object[]? converterParameters) => $"{source:X}";
         }

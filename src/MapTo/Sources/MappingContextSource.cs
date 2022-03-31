@@ -26,38 +26,21 @@ namespace MapTo.Sources
                 .WriteOpeningBracket()
 
                 // Class declaration
-                .WriteLine($"internal sealed class {ClassName}")
+                .WriteLine($"public sealed class {ClassName}")
                 .WriteOpeningBracket()
 
                 .WriteLine("private readonly Dictionary<object, object> _cache;")
                 .WriteLine()
 
                 // Constructor
-                .WriteLine($"internal {ClassName}()")
+                .WriteLine($"public {ClassName}()")
                 .WriteOpeningBracket()
                 .WriteLine("_cache = new Dictionary<object, object>(1);")
                 .WriteClosingBracket()
                 .WriteLine()
 
-                // Factory
-                .WriteLine($"internal static TMapped {FactoryMethodName}<TOriginal, TMapped>(TOriginal original)")
-                .WriteOpeningBracket()
-                .WriteLine("if (original == null) throw new ArgumentNullException(nameof(original));")
-                .WriteLine()
-                .WriteLine("var context = new MappingContext();")
-                .WriteLine("var mapped = context.MapFromWithContext<TOriginal, TMapped>(original);")
-                .WriteLine()
-                .WriteLine("if (mapped == null)")
-                .WriteOpeningBracket()
-                .WriteLine("throw new InvalidOperationException();")
-                .WriteClosingBracket()
-                .WriteLine()
-                .WriteLine("return mapped;")
-                .WriteClosingBracket()
-                .WriteLine()
-
                 // MapFromWithContext method
-                .WriteLine($"internal TMapped MapFromWithContext<TOriginal, TMapped>(TOriginal original)")
+                .WriteLine($"public TMapped MapFromWithContext<TOriginal, TMapped>(TOriginal original, Func<TOriginal, MappingContext, TMapped> CreateDelegate)")
                 .WriteOpeningBracket()
                 .WriteLine("if (original == null)")
                 .WriteOpeningBracket()
@@ -66,11 +49,7 @@ namespace MapTo.Sources
                 .WriteLine()
                 .WriteLine("if (!TryGetValue<TOriginal, TMapped>(original, out var mapped))")
                 .WriteOpeningBracket()
-                .WriteLine("var instance = Activator.CreateInstance(typeof(TMapped), BindingFlags.Instance | BindingFlags.NonPublic, null, new object[] { this, original }, null);")
-                .WriteLine("if (instance != null)")
-                .WriteOpeningBracket()
-                .WriteLine("mapped = (TMapped)instance;")
-                .WriteClosingBracket()
+                .WriteLine("mapped = CreateDelegate(original, this);")
                 .WriteClosingBracket()
                 .WriteLine()
                 .WriteLine("return mapped;")
@@ -78,7 +57,7 @@ namespace MapTo.Sources
                 .WriteLine()
 
                 // Register method
-                .WriteLine("internal void Register<TOriginal, TMapped>(TOriginal original, TMapped mapped)")
+                .WriteLine("public void Register<TOriginal, TMapped>(TOriginal original, TMapped mapped)")
                 .WriteOpeningBracket()
                 .WriteLine("if (original == null) throw new ArgumentNullException(nameof(original));")
                 .WriteLine("if (mapped == null) throw new ArgumentNullException(nameof(mapped));")

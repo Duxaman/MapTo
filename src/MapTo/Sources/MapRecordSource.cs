@@ -21,14 +21,16 @@ namespace MapTo.Sources
                 // Class declaration
                 .WriteLine($"partial record {model.TypeIdentifierName}")
                 .WriteOpeningBracket();
-
+            //TODO: Если убрать поддержку init, генерировать record классы как это было задумано будет нельзя
+           
+            
             // Class body
-            if (model.GenerateSecondaryConstructor)
-            {
-                builder
-                    .GenerateSecondaryConstructor(model)
-                    .WriteLine();
-            }
+            //if (model.GenerateSecondaryConstructor)
+            //{
+            //    builder
+            //        .GenerateSecondaryConstructor(model)
+            //        .WriteLine();
+            //}
 
             builder
                 .GeneratePrivateConstructor(model)

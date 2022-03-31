@@ -63,7 +63,7 @@ namespace MapTo
                     var (source, hintName) = typeDeclarationSyntax switch
                     {
                         ClassDeclarationSyntax => MapClassSource.Generate(model),
-                        RecordDeclarationSyntax => MapRecordSource.Generate(model),
+                        //RecordDeclarationSyntax => MapRecordSource.Generate(model),
                         _ => throw new ArgumentOutOfRangeException()
                     };
 

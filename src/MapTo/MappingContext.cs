@@ -13,6 +13,20 @@ namespace MapTo
     {
         private readonly List<SymbolDisplayPart> _ignoredNamespaces;
 
+        public static MappingContext Create(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
+        {
+            MappingContext context = typeSyntax switch
+            {
+                ClassDeclarationSyntax => new ClassMappingContext(compilation, sourceGenerationOptions, typeSyntax),
+                RecordDeclarationSyntax => new RecordMappingContext(compilation, sourceGenerationOptions, typeSyntax),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            context.Models = context.CreateMappingModelList();
+
+            return context;
+        }
+
         protected MappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
         {
             _ignoredNamespaces = new();
@@ -36,6 +50,7 @@ namespace MapTo
 
         public IEnumerable<MappingModel> Models { get; private set; } = new List<MappingModel>();
 
+        #region PROTECTED PROPERTIES
         protected Compilation Compilation { get; }
 
         protected INamedTypeSymbol IgnorePropertyAttributeTypeSymbol { get; }
@@ -56,19 +71,7 @@ namespace MapTo
 
         protected ImmutableArray<string> Usings { get; private set; }
 
-        public static MappingContext Create(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
-        {
-            MappingContext context = typeSyntax switch
-            {
-                ClassDeclarationSyntax => new ClassMappingContext(compilation, sourceGenerationOptions, typeSyntax),
-                RecordDeclarationSyntax => new RecordMappingContext(compilation, sourceGenerationOptions, typeSyntax),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            context.Models = context.CreateMappingModelList();
-
-            return context;
-        }
+        #endregion
 
         protected void AddDiagnostic(Diagnostic diagnostic)
         {
@@ -83,7 +86,7 @@ namespace MapTo
 
         protected void AddUsingIfRequired(bool condition, string? ns)
         {
-            if (ns is not null && condition && ns != TypeSyntax.GetNamespace() && !Usings.Contains(ns))
+            if (ns is not null && condition && !Usings.Contains(ns))
             {
                 Usings = Usings.Add(ns);
             }
@@ -298,7 +301,6 @@ namespace MapTo
             var typeIdentifierName = TypeSyntax.GetIdentifierName();
             var sourceTypeIdentifierName = sourceTypeSymbol.Name;
             var isTypeInheritFromMappedBaseClass = IsTypeInheritFromMappedBaseClass(semanticModel);
-            var shouldGenerateSecondaryConstructor = ShouldGenerateSecondaryConstructor(semanticModel, sourceTypeSymbol);
 
             var mappedProperties = GetMappedProperties(typeSymbol, sourceTypeSymbol, isTypeInheritFromMappedBaseClass);
             if (!mappedProperties.Any())
@@ -308,10 +310,11 @@ namespace MapTo
             }
 
             AddUsingIfRequired(mappedProperties.Any(p => p.IsEnumerable), "System.Linq");
+            AddUsingIfRequired(true, TypeSyntax.GetNamespace());
 
             return new MappingModel(
                 SourceGenerationOptions,
-                TypeSyntax.GetNamespace(),
+                "MapTo.CreateMethodExtensions",
                 TypeSyntax.Modifiers,
                 TypeSyntax.Keyword.Text,
                 typeIdentifierName,
@@ -320,9 +323,9 @@ namespace MapTo
                 sourceTypeSymbol.ToDisplayString(),
                 mappedProperties,
                 isTypeInheritFromMappedBaseClass,
-                Usings,
-                shouldGenerateSecondaryConstructor);
+                Usings);
         }
+        
         private INamedTypeSymbol? GetTypeConverterBaseInterface(ITypeSymbol converterTypeSymbol, ISymbol property, IPropertySymbol sourceProperty)
         {
             if (!property.TryGetTypeSymbol(out var propertyType))
@@ -336,30 +339,6 @@ namespace MapTo
                     SymbolEqualityComparer.Default.Equals(i.ConstructedFrom, TypeConverterInterfaceTypeSymbol) &&
                     SymbolEqualityComparer.Default.Equals(sourceProperty.Type, i.TypeArguments[0]) &&
                     SymbolEqualityComparer.Default.Equals(propertyType, i.TypeArguments[1]));
-        }
-
-        private bool ShouldGenerateSecondaryConstructor(SemanticModel semanticModel, ISymbol sourceTypeSymbol)
-        {
-            var constructorSyntax = TypeSyntax.DescendantNodes()
-                .OfType<ConstructorDeclarationSyntax>()
-                .SingleOrDefault(c =>
-                    c.ParameterList.Parameters.Count == 1 &&
-                    SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(c.ParameterList.Parameters.Single().Type!).ConvertedType, sourceTypeSymbol));
-
-            if (constructorSyntax is null)
-            {
-                // Secondary constructor is not defined.
-                return true;
-            }
-
-            if (constructorSyntax.Initializer?.ArgumentList.Arguments is not { Count: 2 } arguments ||
-                !SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(arguments[0].Expression).ConvertedType, MappingContextTypeSymbol) ||
-                !SymbolEqualityComparer.Default.Equals(semanticModel.GetTypeInfo(arguments[1].Expression).ConvertedType, sourceTypeSymbol))
-            {
-                AddDiagnostic(DiagnosticsFactory.MissingConstructorArgument(constructorSyntax));
-            }
-
-            return false;
         }
 
         private string? ToQualifiedDisplayName(ISymbol? symbol)

@@ -1,5 +1,5 @@
 ﻿using System;
-using MapTo;
+using MapTo.CreateMethodExtensions;
 using TestConsoleApp.Data.Models;
 using TestConsoleApp.ViewModels;
 using TestConsoleApp.ViewModels2;
@@ -13,9 +13,9 @@ namespace TestConsoleApp
             UserTest();
             CyclicReferenceTest();
              
-            // EmployeeManagerTest();
+            EmployeeManagerTest();
             Console.WriteLine("done");
-        }
+         }
 
         private static void EmployeeManagerTest()
         {

@@ -17,7 +17,7 @@ namespace MapTo
             var sourceProperties = sourceTypeSymbol.GetAllMembers().OfType<IPropertySymbol>().ToArray();
 
             return typeSymbol
-                .GetAllMembers(!isInheritFromMappedBaseClass)
+                .GetAllMembers(isInheritFromMappedBaseClass)
                 .OfType<IPropertySymbol>()
                 .Where(p => !p.HasAttributeForType(IgnorePropertyAttributeTypeSymbol, sourceTypeSymbol, IgnorePropertyAttributeSource.SourceTypeName))
                 .Select(property => MapProperty(sourceTypeSymbol, sourceProperties, property))
