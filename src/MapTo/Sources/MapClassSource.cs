@@ -23,7 +23,7 @@ namespace MapTo.Sources
                 // End namespace declaration
                 .WriteClosingBracket();
 
-            return new(builder.ToString(), $"{model.Namespace}.{model.SourceTypeIdentifierName}.{model.TypeIdentifierName}.g.cs");
+            return new(builder.ToString(), $"{model.Namespace}.{model.SourceTypeIdentifierName}.{model.DestinationTypeIdentifierName}.g.cs");
         }
 
 
@@ -36,17 +36,17 @@ namespace MapTo.Sources
 
             return builder
                 .WriteLine("/// <summary>")
-                .WriteLine($"/// Creates a new instance of <see cref=\"{model.TypeIdentifierName}\"/> and sets its participating properties")
+                .WriteLine($"/// Creates a new instance of <see cref=\"{model.DestinationTypeIdentifierName}\"/> and sets its participating properties")
                 .WriteLine($"/// using the property values from <paramref name=\"{sourceClassParameterName}\"/>.")
                 .WriteLine("/// </summary>")
                 .WriteLine($"/// <param name=\"{sourceClassParameterName}\">The instance of <see cref=\"{model.SourceType}\"/> to use as source.</param>")
-                .WriteLine($"/// <returns>A new instance of <see cred=\"{model.TypeIdentifierName}\"/> -or- <c>null</c> if <paramref name=\"{sourceClassParameterName}\"/> is <c>null</c>.</returns>");
+                .WriteLine($"/// <returns>A new instance of <see cred=\"{model.DestinationTypeIdentifierName}\"/> -or- <c>null</c> if <paramref name=\"{sourceClassParameterName}\"/> is <c>null</c>.</returns>");
         }
 
         private static SourceBuilder GenerateSourceTypeExtensionClass(this SourceBuilder builder, MappingModel model)
         {
             return builder
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static class {model.SourceTypeIdentifierName}To{model.TypeIdentifierName}Extensions")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static class {model.SourceTypeIdentifierName}To{model.DestinationTypeIdentifierName}Extensions")
                 .WriteOpeningBracket()
                 .GenerateSourceTypeExtensionMethod(model)
                 .GenerateCreateMethod(model)
@@ -67,12 +67,12 @@ namespace MapTo.Sources
 
             builder
                 .WriteLineIf(model.Options.SupportNullableStaticAnalysis, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
-                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.TypeIdentifierName}{model.Options.NullableReferenceSyntax} Create{model.TypeIdentifierName}({model.SourceType}{model.Options.NullableReferenceSyntax} {sourceClassParameterName}, MappingContext{model.Options.NullableReferenceSyntax} context=null)")
+                .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.DestinationTypeIdentifierName}{model.Options.NullableReferenceSyntax} Create{model.DestinationTypeIdentifierName}({model.SourceType}{model.Options.NullableReferenceSyntax} {sourceClassParameterName}, MappingContext{model.Options.NullableReferenceSyntax} context=null)")
                 .WriteOpeningBracket()
                 .WriteLine($"if ({mappingContextParameterName} == null) {mappingContextParameterName} = new {MappingContextSource.ClassName}();")
                 .WriteLine($"if ({sourceClassParameterName} == null) throw new ArgumentNullException(nameof({sourceClassParameterName}));")
                 .WriteLine()
-                .WriteLine($"var Mapped = new {model.TypeIdentifierName}();")
+                .WriteLine($"var Mapped = new {model.DestinationTypeIdentifierName}();")
                 .WriteLine()
                 .WriteLine($"{mappingContextParameterName}.{MappingContextSource.RegisterMethodName}({sourceClassParameterName}, Mapped);");
 
@@ -84,19 +84,19 @@ namespace MapTo.Sources
                     var ShortSourceTypeName = $"{SourceTypeName?[SourceTypeName.Length - 1]}";
                     if (property.IsEnumerable)
                     {
-                        var ShortDestTypeName = ExtractShortTypeName(property.EnumerableTypeArgument!);
-                        builder.WriteLine($"Mapped.{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName}.Select(pr => {mappingContextParameterName}.{MappingContextSource.MapMethodName}<{property.MappedSourcePropertyTypeName}, {property.EnumerableTypeArgument}>(pr, {ShortSourceTypeName}To{ShortDestTypeName}Extensions.Create{ShortDestTypeName})).ToList();");
+                        var ShortDestTypeName = ExtractShortTypeName(property.DestinationPropertyEnumerableTypeArgument!);
+                        builder.WriteLine($"Mapped.{property.DestinationPropertyName} = {sourceClassParameterName}.{property.SourcePropertyName}.Select(pr => {mappingContextParameterName}.{MappingContextSource.MapMethodName}<{property.MappedSourcePropertyTypeName}, {property.DestinationPropertyEnumerableTypeArgument}>(pr, {ShortSourceTypeName}To{ShortDestTypeName}Extensions.Create{ShortDestTypeName})).ToList();");
                     }
                     else
                     {
                         if (property.MappedSourcePropertyTypeName is null)
                         {
-                            builder.WriteLine($"Mapped.{property.Name} = {sourceClassParameterName}.{property.SourcePropertyName};");
+                            builder.WriteLine($"Mapped.{property.DestinationPropertyName} = {sourceClassParameterName}.{property.SourcePropertyName};");
                         }
                         else
                         {
-                            var ShortDestTypeName = ExtractShortTypeName(property.Type);
-                            builder.WriteLine($"Mapped.{property.Name} = {mappingContextParameterName}.{MappingContextSource.MapMethodName}<{property.MappedSourcePropertyTypeName}, {property.Type}>({sourceClassParameterName}.{property.SourcePropertyName}, {ShortSourceTypeName}To{ShortDestTypeName}Extensions.Create{ShortDestTypeName});");
+                            var ShortDestTypeName = ExtractShortTypeName(property.DestinationPropertyType);
+                            builder.WriteLine($"Mapped.{property.DestinationPropertyName} = {mappingContextParameterName}.{MappingContextSource.MapMethodName}<{property.MappedSourcePropertyTypeName}, {property.DestinationPropertyType}>({sourceClassParameterName}.{property.SourcePropertyName}, {ShortSourceTypeName}To{ShortDestTypeName}Extensions.Create{ShortDestTypeName});");
                         }
                     }
                 }
@@ -106,7 +106,7 @@ namespace MapTo.Sources
                         ? "null"
                         : $"new object[] {{ {string.Join(", ", property.TypeConverterParameters)} }}";
 
-                    builder.WriteLine($"Mapped.{property.Name} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.SourcePropertyName}, {parameters});");
+                    builder.WriteLine($"Mapped.{property.DestinationPropertyName} = new {property.TypeConverter}().Convert({sourceClassParameterName}.{property.SourcePropertyName}, {parameters});");
                 }
             }
 
@@ -122,9 +122,9 @@ namespace MapTo.Sources
             builder
               .GenerateConvertorMethodsXmlDocs(model, sourceClassParameterName)
               .WriteLineIf(model.Options.SupportNullableStaticAnalysis, $"[return: NotNullIfNotNull(\"{sourceClassParameterName}\")]")
-              .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.TypeIdentifierName}{model.Options.NullableReferenceSyntax} To{model.TypeIdentifierName}(this {model.SourceType}{model.Options.NullableReferenceSyntax} {sourceClassParameterName}, MappingContext{model.Options.NullableReferenceSyntax} context=null)")
+              .WriteLine($"{model.Options.GeneratedMethodsAccessModifier.ToLowercaseString()} static {model.DestinationTypeIdentifierName}{model.Options.NullableReferenceSyntax} To{model.DestinationTypeIdentifierName}(this {model.SourceType}{model.Options.NullableReferenceSyntax} {sourceClassParameterName})")
               .WriteOpeningBracket()
-              .WriteLine($"return Create{model.TypeIdentifierName}({sourceClassParameterName}, context);");
+              .WriteLine($"return Create{model.DestinationTypeIdentifierName}({sourceClassParameterName});");
             return builder.WriteClosingBracket();
         }
     }

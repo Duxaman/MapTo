@@ -19,7 +19,7 @@ namespace MapTo
             Create($"{ErrorId}010", location, $"Unable to find '{syntaxName}' type.");
 
         internal static Diagnostic MapFromAttributeNotFoundError(Location location) =>
-            Create($"{ErrorId}020", location, $"Unable to find {MapFromAttributeSource.AttributeName} type.");
+            Create($"{ErrorId}020", location, $"Unable to find {MapAttributeSource.AttributeName} type.");
 
         internal static Diagnostic NoMatchingPropertyFoundError(Location location, INamedTypeSymbol classType, INamedTypeSymbol sourceType) =>
             Create($"{ErrorId}030", location, $"No matching properties found between '{classType.ToDisplayString()}' and '{sourceType.ToDisplayString()}' types.");

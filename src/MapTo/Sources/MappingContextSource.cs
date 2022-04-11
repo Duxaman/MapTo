@@ -13,7 +13,7 @@ namespace MapTo.Sources
         
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
-            var usings = new List<string> { "System", "System.Collections.Generic", "System.Reflection" };
+            var usings = new List<string> { "System", "System.Collections.Generic"};
 
             using var builder = new SourceBuilder()
                 .WriteLine(GeneratedFilesHeader)

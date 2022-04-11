@@ -6,6 +6,12 @@ using Microsoft.CodeAnalysis.CSharp;
 
 namespace MapTo
 {
+    internal enum MappingDirection
+    {
+        From,
+        To
+    }
+
     internal enum AccessModifier
     {
         Public,
@@ -22,29 +28,38 @@ namespace MapTo
 
     internal record SourceCode(string Text, string HintName);
 
+    /// <summary>
+    /// Mapped property
+    /// Destination fields are related to the class
+    /// that need to be generated
+    /// </summary>
     internal record MappedProperty(
-        string Name,
-        string Type,
+        string DestinationPropertyName,
+        string DestinationPropertyType,
         string? TypeConverter,
         ImmutableArray<string> TypeConverterParameters,
         string SourcePropertyName,
         string? MappedSourcePropertyTypeName,
-        string? EnumerableTypeArgument)
+        string? DestinationPropertyEnumerableTypeArgument)
     {
-        public bool IsEnumerable => EnumerableTypeArgument is not null;
+        public bool IsEnumerable => DestinationPropertyEnumerableTypeArgument is not null;
     }
 
+    /// <summary>
+    /// Creates MappingModel where
+    /// Destination fields are related to the class
+    /// that need to be generated
+    /// </summary>
     internal record MappingModel (
         SourceGenerationOptions Options,
         string? Namespace,
         SyntaxTokenList Modifiers,
-        string Type,
-        string TypeIdentifierName,
+        string DestinationType,
+        string DestinationTypeIdentifierName,
         string SourceNamespace,
         string SourceTypeIdentifierName,
         string SourceTypeFullName,
         ImmutableArray<MappedProperty> MappedProperties,
-        bool HasMappedBaseClass,
         ImmutableArray<string> Usings
     )
     {

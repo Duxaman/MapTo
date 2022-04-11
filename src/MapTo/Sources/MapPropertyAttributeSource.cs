@@ -2,13 +2,13 @@
 
 namespace MapTo.Sources
 {
-    internal static class MapPropertyAttributeSource
+    internal static class MapPropertyAttributeSource 
     {
         internal const string AttributeName = "MapProperty";
         internal const string AttributeClassName = AttributeName + "Attribute";
         internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
-        internal const string SourcePropertyNamePropertyName = "SourcePropertyName"; 
-        internal const string SourceTypeName = "SourceTypeName";
+        internal const string TargetPropertyNamePropertyName = "TargetPropertyName"; 
+        internal const string TargetTypeName = "TargetTypeName";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
@@ -45,23 +45,23 @@ namespace MapTo.Sources
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Gets or sets the property name of the object to mapping from.")
+                    .WriteLine("/// Gets or sets the property name of the object to mapping from/to.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine($"public string{options.NullableReferenceSyntax} {SourcePropertyNamePropertyName} {{ get; set; }}");
+                .WriteLine($"public string{options.NullableReferenceSyntax} {TargetPropertyNamePropertyName} {{ get; set; }}");
 
             if (options.GenerateXmlDocument)
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine("/// Gets or sets the Type name of the object to mapping from.")
+                    .WriteLine("/// Gets or sets the Type name of the object to mapping from/to.")
                     .WriteLine("/// </summary>");
             }
 
             builder
-                .WriteLine($"public Type{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
+                .WriteLine($"public Type{options.NullableReferenceSyntax} {TargetTypeName} {{ get; set; }}")
                 .WriteClosingBracket() // class
                 .WriteClosingBracket(); // namespace
 

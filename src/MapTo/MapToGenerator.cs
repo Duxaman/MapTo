@@ -27,7 +27,7 @@ namespace MapTo
             {
                 var options = SourceGenerationOptions.From(context);
                 var compilation = context.Compilation
-                    .AddSource(ref context, MapFromAttributeSource.Generate(options))
+                    .AddSource(ref context, MapAttributeSource.Generate(options))
                     .AddSource(ref context, IgnorePropertyAttributeSource.Generate(options))
                     .AddSource(ref context, ITypeConverterSource.Generate(options))
                     .AddSource(ref context, MapTypeConverterAttributeSource.Generate(options))
@@ -48,6 +48,7 @@ namespace MapTo
 
         private static void AddGeneratedMappingsClasses(GeneratorExecutionContext context, Compilation compilation, IEnumerable<TypeDeclarationSyntax> candidateTypes, SourceGenerationOptions options)
         {
+            var sourceCode = new List<SourceCode>();
             foreach (var typeDeclarationSyntax in candidateTypes)
             {
                 var mappingContext = MappingContext.Create(compilation, options, typeDeclarationSyntax);
@@ -60,16 +61,17 @@ namespace MapTo
 
                 foreach (var model in mappingContext.Models)
                 {
-                    var (source, hintName) = typeDeclarationSyntax switch
+                    var source = typeDeclarationSyntax switch
                     {
                         ClassDeclarationSyntax => MapClassSource.Generate(model),
-                        //RecordDeclarationSyntax => MapRecordSource.Generate(model),
+                        RecordDeclarationSyntax => throw new NotImplementedException(),
                         _ => throw new ArgumentOutOfRangeException()
                     };
 
-                    context.AddSource(hintName, source);
+                    sourceCode.Add(source);
                 }
             }
+            sourceCode.Distinct().ForEach(s => context.AddSource(s.HintName, s.Text));
         }
     }
 }

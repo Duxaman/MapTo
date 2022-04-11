@@ -31,13 +31,12 @@ namespace MapTo.Extensions
 
         public static string GetIdentifierName(this TypeDeclarationSyntax typeSyntax) => typeSyntax.Identifier.Text;
 
-        public static IEnumerable<AttributeSyntax> GetAttributes(this TypeDeclarationSyntax typeDeclarationSyntax, string attributeName)
+        public static IEnumerable<AttributeData> GetAttributes(this TypeDeclarationSyntax typeDeclarationSyntax, string attributeClassName, SemanticModel semanticModel)
         {
-            return typeDeclarationSyntax.AttributeLists
-                .SelectMany(al => al.Attributes)
-                .Where(a =>
-                    (a.Name as IdentifierNameSyntax)?.Identifier.ValueText == attributeName ||
-                    ((a.Name as QualifiedNameSyntax)?.Right as IdentifierNameSyntax)?.Identifier.ValueText == attributeName);
+            return semanticModel
+                .GetDeclaredSymbol(typeDeclarationSyntax)!
+                .GetAttributes()
+                .Where(attr => attr.AttributeClass!.Name == attributeClassName);
         }
 
         public static bool HasAttribute(this ISymbol symbol, ITypeSymbol attributeSymbol) =>
@@ -49,7 +48,7 @@ namespace MapTo.Extensions
                 .Where(a => a.AttributeClass?.Equals(attributeSymbol, SymbolEqualityComparer.Default) == true)  // Select all attributes equals to attributeSymbol
                 .Any(a =>
                 {
-                    if (a.GetAttributeParameterValue(typeName) is ISymbol propertyTypeFromAttribute) 
+                    if (a.GetAttributeParameterValue(typeName) is ISymbol propertyTypeFromAttribute)
                     {
                         return propertyTypeFromAttribute.Equals(type, SymbolEqualityComparer.Default);
                     }
@@ -105,6 +104,17 @@ namespace MapTo.Extensions
                 (p.NullableAnnotation != NullableAnnotation.Annotated ||
                  p.NullableAnnotation == NullableAnnotation.Annotated &&
                  targetProperty.NullableAnnotation == NullableAnnotation.Annotated));
+        }
+
+        public static bool IsTypeParameterizedEnumerable(this ITypeSymbol Type, Compilation compilation)
+        {
+            if(Type is INamedTypeSymbol namedTypeSymbol &&
+                !Type.IsPrimitiveType() &&
+                (compilation.IsGenericEnumerable(Type) || Type.AllInterfaces.Any(i => compilation.IsGenericEnumerable(i))))
+            {
+                return true;
+            }
+            return false;
         }
 
         public static INamedTypeSymbol GetTypeByMetadataNameOrThrow(this Compilation compilation, string fullyQualifiedMetadataName) =>

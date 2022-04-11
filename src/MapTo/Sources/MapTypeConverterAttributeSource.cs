@@ -7,7 +7,7 @@ namespace MapTo.Sources
         internal const string AttributeName = "MapTypeConverter";
         internal const string AttributeClassName = AttributeName + "Attribute";
         internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
-        internal const string SourceTypeName = "SourceTypeName";
+        internal const string TargetTypeName = "TargetTypeName";
         internal const string ConverterPropertyName = "Converter";
         internal const string ConverterParametersPropertyName = "ConverterParameters";
 
@@ -62,14 +62,14 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public Type{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
+                .WriteLine($"public Type{options.NullableReferenceSyntax} {TargetTypeName} {{ get; set; }}")
                 .WriteLine();
 
             if (options.GenerateXmlDocument)
             {
                 builder
                     .WriteLine("/// <summary>")
-                    .WriteLine($"/// Gets or sets the <see cref=\"{ITypeConverterSource.InterfaceName}{{TSource,TDestination}}\" /> to be used to convert the source type.")
+                    .WriteLine($"/// Gets or sets the <see cref=\"{ITypeConverterSource.InterfaceName}{{TSource,TDestination}}\" /> to be used to convert the target type.")
                     .WriteLine("/// </summary>");
             }
 

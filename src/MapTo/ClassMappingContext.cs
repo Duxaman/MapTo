@@ -9,20 +9,52 @@ namespace MapTo
 {
     internal class ClassMappingContext : MappingContext
     {
-        internal ClassMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions, TypeDeclarationSyntax typeSyntax)
-            : base(compilation, sourceGenerationOptions, typeSyntax) { }
+        internal ClassMappingContext(Compilation compilation, SourceGenerationOptions sourceGenerationOptions)
+            : base(compilation, sourceGenerationOptions) { }
 
-        protected override ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol typeSymbol, ITypeSymbol sourceTypeSymbol, bool isInheritFromMappedBaseClass)
+        /// <inheritdoc />
+        protected override ImmutableArray<MappedProperty> GetMappedProperties(ITypeSymbol argumentClassTypeSymbol, ITypeSymbol currentClassTypeSymbol, TypeDeclarationSyntax currentClassTypeSyntax,
+            TypeDeclarationSyntax argumentClassTypeSyntax, MappingDirection mappingDirection = MappingDirection.From)
         {
-            var sourceProperties = sourceTypeSymbol.GetAllMembers().OfType<IPropertySymbol>().ToArray();
+            /*
+             * just filter all needed properties 
+             */
 
-            return typeSymbol
-                .GetAllMembers(isInheritFromMappedBaseClass)
-                .OfType<IPropertySymbol>()
-                .Where(p => !p.HasAttributeForType(IgnorePropertyAttributeTypeSymbol, sourceTypeSymbol, IgnorePropertyAttributeSource.SourceTypeName))
-                .Select(property => MapProperty(sourceTypeSymbol, sourceProperties, property))
-                .Where(mappedProperty => mappedProperty is not null)
-                .ToImmutableArray()!;
+            if (mappingDirection == MappingDirection.From)
+            {
+                //currentClass is destination class
+
+                var argumentClassPropertySymbols = argumentClassTypeSymbol
+                    .GetAllMembers()
+                    .OfType<IPropertySymbol>()
+                    .ToArray();
+
+                return currentClassTypeSymbol
+                    .GetAllMembers()
+                    .OfType<IPropertySymbol>()
+                    .Where(p => !p.HasAttributeForType(IgnorePropertyAttributeTypeSymbol, argumentClassTypeSymbol, IgnorePropertyAttributeSource.TargetTypeName)) //filter ignore attributes from destination class
+                    .Select(currentClassProperty => MapProperty(argumentClassTypeSymbol, currentClassTypeSymbol ,argumentClassPropertySymbols, currentClassProperty, argumentClassTypeSyntax, false))
+                    .ToList()
+                    .Where(mappedProperty => mappedProperty is not null)
+                    .ToImmutableArray()!;
+            }
+            else
+            {
+                //argumentClass is destination class 
+                var currentClassTypeSymbols = currentClassTypeSymbol
+                    .GetAllMembers()
+                    .OfType<IPropertySymbol>()
+                    .Where(p => !p.HasAttributeForType(IgnorePropertyAttributeTypeSymbol, argumentClassTypeSymbol, IgnorePropertyAttributeSource.TargetTypeName)) //filter ignore attributes from source class
+                    .ToArray();
+
+                return argumentClassTypeSymbol
+                    .GetAllMembers()
+                    .OfType<IPropertySymbol>()
+                    .Select(argumentClassProperty => MapProperty(currentClassTypeSymbol, argumentClassTypeSymbol, currentClassTypeSymbols, argumentClassProperty, currentClassTypeSyntax, true))
+                    .ToList()
+                    .Where(mappedProperty => mappedProperty is not null)
+                    .ToImmutableArray()!;
+            }
         }
     }
 }

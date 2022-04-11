@@ -7,7 +7,7 @@ namespace MapTo.Sources
         internal const string AttributeName = "IgnoreProperty";
         internal const string AttributeClassName = AttributeName + "Attribute";
         internal const string FullyQualifiedName = RootNamespace + "." + AttributeClassName;
-        internal const string SourceTypeName = "SourceTypeName";
+        internal const string TargetTypeName = "TargetTypeName";
 
         internal static SourceCode Generate(SourceGenerationOptions options)
         {
@@ -41,7 +41,7 @@ namespace MapTo.Sources
             }
 
             builder
-                .WriteLine($"public Type{options.NullableReferenceSyntax} {SourceTypeName} {{ get; set; }}")
+                .WriteLine($"public Type{options.NullableReferenceSyntax} {TargetTypeName} {{ get; set; }}")
                 .WriteClosingBracket() // class
                 .WriteClosingBracket(); //namespace
 
