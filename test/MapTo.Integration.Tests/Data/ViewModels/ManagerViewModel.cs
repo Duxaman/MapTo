@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using MapTo.Integration.Tests.Data.Models;
+using MapTo;
 
 namespace MapTo.Integration.Tests.Data.ViewModels
 {
-    [MapFrom(typeof(Manager))]
+    [Map(typeof(Manager), MappingDirection.From)]
     public partial class ManagerViewModel : EmployeeViewModel
     {
         public int Level { get; set; }

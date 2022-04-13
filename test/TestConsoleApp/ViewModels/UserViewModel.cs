@@ -4,22 +4,24 @@ using TestConsoleApp.Data.Models;
 
 namespace TestConsoleApp.ViewModels
 {
-    [MapFrom(typeof(User))]
-    [MapFrom(typeof(UserDto))]
-    public partial class UserViewModel
+    [Map(typeof(User), MappingDirection.From)]
+    //[Map(typeof(UserDto), MappingDirection.From)]
+    public class UserViewModel
     {
-        [MapProperty(SourcePropertyName = nameof(User.Id), SourceTypeName = typeof(User))]
-        [MapProperty(SourcePropertyName = nameof(UserDto.Id), SourceTypeName = typeof(UserDto))]
-        [MapTypeConverter(typeof(IdConverter), SourceTypeName = typeof(UserDto))]
-        [MapTypeConverter(typeof(IdConverter), SourceTypeName = typeof(User))]
+        [MapProperty(TargetPropertyName = nameof(User.Id), TargetTypeName = typeof(User))]
+        [MapProperty(TargetPropertyName = nameof(UserDto.Id), TargetTypeName = typeof(UserDto))]
+        [MapTypeConverter(typeof(IdConverter), TargetTypeName = typeof(UserDto))]
+        [MapTypeConverter(typeof(IdConverter), TargetTypeName = typeof(User))]
         public string Key { get; set; }
+
+        //[IgnoreProperty]
         public DateTimeOffset RegisteredAt { get; set; }
 
-        //[MapProperty(SourcePropertyName = nameof(UserDto.Name))]
-        [MapProperty(SourcePropertyName = nameof(UserDto.Name), SourceTypeName = typeof(UserDto))]
+        [MapProperty(TargetPropertyName = nameof(User.Name), TargetTypeName = typeof(User))]
+        [MapProperty(TargetPropertyName = nameof(UserDto.Name), TargetTypeName = typeof(UserDto))]
         public string TestName { get; set; }
         
-        //[IgnoreProperty(SourceTypeName = typeof(User))]
+        //[IgnoreProperty(TargetTypeName = typeof(User))]
         public ProfileViewModel Profile { get; set; }
 
         public class IdConverter : ITypeConverter<int, string>

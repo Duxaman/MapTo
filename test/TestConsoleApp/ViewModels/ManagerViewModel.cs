@@ -6,8 +6,8 @@ using TestConsoleApp.ViewModels;
 
 namespace TestConsoleApp.ViewModels2
 {
-    [MapFrom(typeof(Manager))]
-    public partial class ManagerViewModel : EmployeeViewModel
+    //[Map(typeof(Manager), MappingDirection.From)]
+    public class ManagerViewModel : EmployeeViewModel
     {
         public int Level { get; set; }
 

@@ -4,7 +4,8 @@ using TestConsoleApp.ViewModels2;
 
 namespace TestConsoleApp.ViewModels
 {
-    [MapFrom(typeof(Employee))]
+    [Map(typeof(Employee), MappingDirection.From)]
+
     public partial class EmployeeViewModel
     {
         public int Id { get; set; }
